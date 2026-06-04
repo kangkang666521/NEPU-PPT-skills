@@ -71,9 +71,9 @@ Avoid full-slide screenshots except for temporary references or explicitly image
 
 For diagrams, use native editable shapes/connectors whenever feasible. For web-supported images, keep source records and verify that placement does not block text or logos.
 
-## 6. Visual QA Before Delivery
+## 6. Quality-First Visual QA Before Delivery
 
-Render the PPTX to slide images and inspect the deck using [visual-qa.md](visual-qa.md).
+Always run the structural audit and render the PPTX once for visual inspection using [visual-qa.md](visual-qa.md).
 
 Check:
 
@@ -84,6 +84,10 @@ Check:
 - chart/table readability
 - diagram connector clarity and label readability
 - user-locked content preservation
+
+Use the contact sheet for the whole deck, then inspect full-size previews for risky slides: charts, tables, diagrams, dense text, cropped evidence, and image-heavy layouts. If no high or fixable medium defects are found, do not regenerate solely to satisfy a process step.
+
+Upgrade to rigorous QA for paper reports, defenses, scientific reviews, complex evidence, existing-deck revisions, or when the user explicitly requests high quality.
 
 ## 7. Revise Without Overwriting
 
@@ -192,7 +196,7 @@ Prefer a few readable key panels over many unreadable full figures. For a standa
 
 ### P7. Write Slide-by-Slide Content
 
-For each slide, write: Chinese title (conclusion-style, not topic labels), 2-4 concise Chinese bullets, selected figure asset, Chinese figure caption and interpretation, one core takeaway sentence, and Chinese speaker notes.
+For each slide, write: Chinese title (conclusion-style, not topic labels), 2-4 concise Chinese bullets, selected figure asset, Chinese figure caption and interpretation, and one core takeaway sentence. Add Chinese speaker notes only when the user requests notes or a presentation script.
 
 **On-slide text budget:**
 - Title: one line preferred; two lines only when vertical space allows.
@@ -231,76 +235,12 @@ After creating the first PPTX draft, run at least one explicit self-review pass:
 1. Inspect the generated PPTX and extracted assets.
 2. Write a short defect list with severity (`high`, `medium`, `low`) and slide numbers.
 3. Correct every high-severity and fixable medium-severity issue.
-4. Regenerate the PPTX after edits.
-5. Re-run verification and update QA record.
+4. Regenerate the PPTX only when edits were required.
+5. Re-run verification after edits and update the QA record.
 
 **Severity rules:**
 - `high`: clipped scientific evidence (axes, legends, panel labels), unreadable main evidence, overlapping text/figures, text cut off by its box, wrong slide order, fabricated claims.
-- `medium`: overly dense slides, rigid AI-looking layouts, weak crop margins, detached captions, excessive repeated layouts, missing speaker notes.
+- `medium`: overly dense slides, rigid AI-looking layouts, weak crop margins, detached captions, excessive repeated layouts, or missing speaker notes when notes were requested.
 - `low`: minor alignment imperfections, palette refinements, optional split of a readable but dense figure.
 
 See [visual-qa.md](visual-qa.md) and [quality-gates.md](quality-gates.md) for detailed checklists.
-
-## 3. Build A Claim Spine
-
-Write one claim per slide. Each claim should say what the audience should believe after seeing the slide.
-
-Common deck structures:
-
-- academic review: topic -> literature map -> reality base -> mechanism -> risk/problem -> governance/solution -> future agenda
-- thesis defense: question -> method -> data -> results -> contribution -> limitations -> conclusion
-- group meeting: goal -> progress -> experiment -> issue -> next step
-- course presentation: concept -> case -> analysis -> reflection -> takeaway
-- activity report: theme -> highlights -> timeline -> participation -> outcomes -> closing
-
-## 4. Choose Proof Objects
-
-Use the proof object that best fits the claim:
-
-- table for classification
-- matrix for risk, comparison, or governance mapping
-- mechanism chain for formation processes
-- timeline for development stages
-- chart for trend or proportion
-- quote/case panel for qualitative material
-- visual montage for campus or event storytelling
-
-If the proof object depends on CSV, Excel, experimental data, statistics, or existing chart screenshots, read [data-visualization.md](data-visualization.md) before drawing or inserting charts.
-
-If the proof object is a process, mechanism, architecture, governance path, or structure diagram, read [diagram-workflow.md](diagram-workflow.md) before drawing. Plan nodes and connectors before placing shapes.
-
-If the proof object depends on public online information or images, read [web-content-acquisition.md](web-content-acquisition.md) before collecting material. Keep source records and permission notes.
-
-## 5. Build Editable Slides
-
-Prefer native PowerPoint objects:
-
-- text boxes
-- shapes
-- editable tables
-- native charts or editable chart-like primitives
-- image layers for photos, logos, and complex figures
-
-Avoid full-slide screenshots except for temporary references or explicitly image-based deliverables.
-
-For diagrams, use native editable shapes/connectors whenever feasible. For web-supported images, keep source records and verify that placement does not block text or logos.
-
-## 6. Visual QA Before Delivery
-
-Render the PPTX to slide images and inspect the deck using [visual-qa.md](visual-qa.md).
-
-Check:
-
-- text and image overlap
-- blocked labels, footers, logos, and titles
-- low color contrast
-- text overflow and awkward Chinese wrapping
-- chart/table readability
-- diagram connector clarity and label readability
-- user-locked content preservation
-
-## 7. Revise Without Overwriting
-
-When the task is an update to an existing deck, do not regenerate from scratch unless the user asks for a full rebuild. Read the latest user-edited deck, preserve their manual changes, then create a new versioned file before applying the new request.
-
-Use [revision-safety.md](revision-safety.md) for naming, revision logs, and image habit tracking.

@@ -77,6 +77,8 @@ def _detect_available_cjk_font() -> str | None:
 
 def _build_font_family_list(preferred: str | None = None) -> list[str]:
     """Build the font.sans-serif list with detected fonts or safe fallbacks."""
+    if preferred:
+        return [preferred] + [f for f in _CJK_FONT_CANDIDATES if f != preferred]
     detected = _detect_available_cjk_font()
     if detected:
         # Put detected font first, followed by the rest of the chain
@@ -86,8 +88,6 @@ def _build_font_family_list(preferred: str | None = None) -> list[str]:
                 chain.append(f)
         return chain
     # No CJK font detected: use safe fallback chain as-is
-    if preferred:
-        return [preferred] + [f for f in _CJK_FONT_CANDIDATES if f != preferred]
     return list(_CJK_FONT_CANDIDATES)
 
 
@@ -137,15 +137,19 @@ def ppt_figure_size(kind: str = "wide") -> tuple[float, float]:
         "square": (4.2, 4.2),
         "tall": (4.2, 5.4),
     }
-    return sizes.get(kind, sizes["wide"])
+    if kind not in sizes:
+        raise ValueError(f"Unknown figure size '{kind}'. Choose from: {list(sizes)}")
+    return sizes[kind]
 
 
 def save_ppt_figure(fig, output_base: str | Path, *, transparent: bool = False) -> dict[str, str]:
-    """Save PNG and PDF copies for PPT insertion and future regeneration."""
+    """Save PNG, editable SVG, and PDF copies for PPT use and regeneration."""
     base = Path(output_base)
     base.parent.mkdir(parents=True, exist_ok=True)
     png = base.with_suffix(".png")
+    svg = base.with_suffix(".svg")
     pdf = base.with_suffix(".pdf")
     fig.savefig(png, transparent=transparent)
+    fig.savefig(svg, transparent=transparent)
     fig.savefig(pdf, transparent=transparent)
-    return {"png": str(png), "pdf": str(pdf)}
+    return {"png": str(png), "svg": str(svg), "pdf": str(pdf)}

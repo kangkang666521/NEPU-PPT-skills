@@ -63,7 +63,7 @@ When revising an existing deck, default to conservative mode unless the user exp
 In conservative mode:
 
 - Keep the user's existing slide structure, page order, title wording, narrative emphasis, images, and successful layouts.
-- Fix only verifiable problems: broken files, duplicated page numbers, text overflow, obvious typos, unreadable contrast, broken links, missing notes, or explicitly requested changes.
+- Fix only verifiable problems: broken files, duplicated page numbers, text overflow, obvious typos, unreadable contrast, broken links, missing requested notes, or explicitly requested changes.
 - Do not replace a working screenshot, diagram, table, or card layout with a new interpretation merely because it could look cleaner.
 - Do not rewrite slide claims or bullets unless the user asks for content rewriting.
 - If a proposed improvement would change the user's meaning, layout rhythm, or a page that already works, create a preview/proposal first instead of applying it silently.

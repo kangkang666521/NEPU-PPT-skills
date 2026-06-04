@@ -41,11 +41,9 @@ def main() -> None:
     )
 
     # Figure-dominant: asymmetric 70/30
-    b.add_figure_slide(
-        "figures/_placeholder-chart.png",
-        claim="胺基功能化 MOF 材料在低压下表现优异",
-        caption="Source: adapted from Zhang et al. (2024)",
-        layout="asymmetric-70-30",
+    b.add_claim_slide(
+        "胺基功能化 MOF 材料在低压下表现优异",
+        bullets=["示例画廊不使用虚构或缺失的科研图", "实际任务中应插入可追溯的真实证据图"],
     )
 
     # Comparison matrix
@@ -77,7 +75,7 @@ def main() -> None:
         ["MOF 基碳捕集材料具有规模化应用前景", "低温再生工艺可显著降低运营成本", "下一步将推进工业级中试验证"],
     )
 
-    b.save(output)
+    b.save(output, overwrite=True)
     print(f"Gallery reference PPTX saved to: {output}")
 
     # ── Clean-white variant for text-heavy academic ──
@@ -106,7 +104,7 @@ def main() -> None:
         ["非常规油气水力压裂的环境影响具有强区域依赖性", "亟需建立标准化的跨区域对比方法体系", "中国四川盆地研究深度显著落后于北美"],
     )
     output2 = out_dir / "nepu-clean-white-reference.pptx"
-    b2.save(output2)
+    b2.save(output2, overwrite=True)
     print(f"Gallery reference PPTX saved to: {output2}")
 
 

@@ -22,6 +22,9 @@ PROFILES = [
     "admin-briefing",
 ]
 
+ASSET_MODES = ["none", "logos", "all"]
+QUALITY_MODES = ["auto", "standard", "rigorous"]
+
 # Data-driven seed files: (relative_path, initial_content, is_json)
 SEED_FILES: list[tuple[str, str, bool]] = [
     (
@@ -124,6 +127,8 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
         "profile": args.profile,
         "language": args.language,
         "planned_slides": args.slides,
+        "quality_mode": args.quality,
+        "asset_mode": args.assets,
         "directories": {
             "source": "source",
             "raw_data": "data/raw",
@@ -148,7 +153,7 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
             "speaker_note_locks": "planning/speaker-note-locks.json",
         },
         "web_manifest": "assets/web/sources.json",
-        "bundled_assets_copied": not args.no_bundled_assets,
+        "bundled_assets_copied": args.assets != "none",
         "notes": [
             "Built-in NEPU logos are copied into assets/logos/ by default when present.",
             "Place additional authorized NEPU logos and PPT templates in assets/.",
@@ -158,8 +163,16 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
             "Never overwrite user-provided or previously delivered PPTX files; write revisions to output/versions/.",
             "For generated charts, keep plotting code, data, source notes, and outputs under figures/.",
             "For generated diagrams, keep a diagram plan and verify rendered clarity/editability.",
+            "Reference bundled templates and fonts from the skill directory; copy only the selected file when needed.",
         ],
     }
+
+
+def resolve_quality_mode(requested: str, profile: str) -> str:
+    """Resolve automatic QA depth from the task profile."""
+    if requested != "auto":
+        return requested
+    return "rigorous" if profile == "thesis-defense" else "standard"
 
 
 def main() -> None:
@@ -169,11 +182,26 @@ def main() -> None:
     parser.add_argument("--language", choices=["zh", "en", "bilingual"], default="zh")
     parser.add_argument("--slides", type=int, default=9)
     parser.add_argument(
+        "--quality",
+        choices=QUALITY_MODES,
+        default="auto",
+        help="QA depth. Auto selects rigorous for thesis defenses; use rigorous for paper reports or complex evidence.",
+    )
+    parser.add_argument(
+        "--assets",
+        choices=ASSET_MODES,
+        default="logos",
+        help="Bundled assets to copy. Default copies logos only; selected templates can be used in place.",
+    )
+    parser.add_argument(
         "--no-bundled-assets",
         action="store_true",
-        help="Do not copy bundled logos into the workspace.",
+        help="Deprecated alias for --assets none.",
     )
     args = parser.parse_args()
+    if args.no_bundled_assets:
+        args.assets = "none"
+    args.quality = resolve_quality_mode(args.quality, args.profile)
 
     workspace = args.workspace.resolve()
 
@@ -205,12 +233,17 @@ def main() -> None:
 
     # Copy bundled assets
     copied_assets: dict[str, list[str]] = {"logos": [], "templates": [], "fonts": []}
-    if not args.no_bundled_assets:
-        for kind in ("logos", "templates", "fonts"):
+    asset_kinds = {
+        "none": (),
+        "logos": ("logos",),
+        "all": ("logos", "templates", "fonts"),
+    }[args.assets]
+    if asset_kinds:
+        for kind in asset_kinds:
             copied_assets[kind] = copy_tree_contents(
                 BUNDLED_ASSETS / kind, workspace / "assets" / kind
             )
-        manifest["copied_bundled_assets"] = copied_assets
+    manifest["copied_bundled_assets"] = copied_assets
 
     (workspace / "nepu_ppt_task.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),

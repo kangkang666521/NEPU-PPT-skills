@@ -13,6 +13,7 @@
 ├── AGENTS.md                    ← 项目记忆文件
 ├── README.md
 ├── ASSET_NOTICE.md
+├── requirements.txt             ← 独立运行所需 Python 依赖
 │
 ├── scripts/
 │   ├── create_workspace.py      ← 引导式创建工作区
@@ -21,6 +22,7 @@
 │   ├── web_collect.py           ← 公开网页图文采集
 │   ├── validate_pptx.py         ← 跨平台 PPTX 结构校验（无需 Office）
 │   ├── office_bridge.ps1        ← Office/WPS COM 兼容性验证
+│   ├── self_check.py             ← 项目级烟雾检查
 │   ├── run_evals.py             ← 评估用例运行器
 │   └── generate_gallery.py      ← 布局参考 PPTX 生成
 │
@@ -52,7 +54,7 @@
 │   └── fonts/                   ← HarmonyOS Sans SC 字体
 │
 └── evals/
-    └── evals.json               ← 9 个 AI 行为评估用例
+    └── evals.json               ← 10 个 AI 行为评估用例
 ```
 
 ## 快速开始
@@ -67,7 +69,12 @@ python scripts/create_workspace.py ./my-deck --profile academic-report
 
 # 4. 交付前校验（可选）
 python scripts/validate_pptx.py output/versions/deck.pptx
+
+# 5. 修改技能项目后运行烟雾检查
+python scripts/self_check.py
 ```
+
+工作区默认只复制内置 logo，避免每次任务重复复制约 320 MB 的全部模板和字体。需要全部资源时使用 `--assets all`；`--quality auto` 会让答辩自动进入严格模式，其他高风险交付使用 `--quality rigorous`。无论哪种质量模式，最终 PPTX 都应完成结构审计和至少一轮渲染视觉检查。
 
 ## 脚本速览
 
@@ -79,6 +86,7 @@ python scripts/validate_pptx.py output/versions/deck.pptx
 | `web_collect.py` | 公开网页文本/图片采集，自动编码检测，来源记录 |
 | `validate_pptx.py` | 纯 Python 结构校验：边界/溢出/占位符/布局重复/图片尺寸 |
 | `office_bridge.ps1` | Windows 下调 PowerPoint/WPS COM 验证和重新保存 |
+| `self_check.py` | 检查主题构建、非覆盖保存、资源错误、结构验证、网页解析与质量模式 |
 | `run_evals.py` | 评估用例验证和筛选 |
 | `generate_gallery.py` | 生成 NEPU 风格布局参考 PPTX |
 
@@ -111,6 +119,13 @@ python scripts/validate_pptx.py output/versions/deck.pptx
 | `office-compatibility.md` | Office/WPS/LibreOffice 验证工作流 |
 
 ## 安装
+
+Codex 桌面运行时通常已提供文档与演示处理依赖。需要在独立 Python 环境运行脚本时：
+
+```bash
+python -m pip install -r requirements.txt
+python scripts/self_check.py
+```
 
 将以下提示复制到 Codex 中：
 

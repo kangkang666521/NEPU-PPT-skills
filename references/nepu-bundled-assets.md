@@ -11,13 +11,13 @@
 
 ## PPT 模板
 
-当前无 NEPU 官方 PPTX 模板内置。**强烈建议 NEPU 用户提供自己院系/实验室/机关的授权 PPTX 模板**，放入工作区的 `assets/templates/` 中。技能在选择模板时会优先使用用户提供的模板。
+`assets/templates/nepu-civilization-office/` 提供 7 套便利性 PPTX 模板，但它们不是 NEPU 官方模板。**优先使用用户提供的院系/实验室/机关授权模板**；内置模板的场景映射见 [nepu-template-selection.md](nepu-template-selection.md)。
 
-无模板时的默认策略：使用空白 16:9 PPTX + NEPU 石油蓝色板（`#00508F`）+ NEPU logo 手建风格。详见 [nepu-style-system.md](nepu-style-system.md) 和 [nepu-template-selection.md](nepu-template-selection.md)。
+无合适模板时，使用空白 16:9 PPTX + NEPU 石油蓝色板（`#00508F`）+ NEPU logo 手建风格。详见 [nepu-style-system.md](nepu-style-system.md) 和 [nepu-template-selection.md](nepu-template-selection.md)。
 
 ## 字体
 
-当前无内置字体包。技能会使用系统已安装的中文字体（Microsoft YaHei、DengXian、Source Han Sans SC 等）。
+内置 HarmonyOS Sans SC 字体包可按需使用。优先使用系统已安装的中文字体（Microsoft YaHei、DengXian、Source Han Sans SC 等），避免每个任务复制或安装字体包。
 
 用户可自行在任务工作区的 `assets/fonts/` 中放入字体文件。
 
@@ -25,8 +25,10 @@
 
 运行 `python scripts/create_workspace.py` 时：
 
-- 内置 NEPU logo（`assets/logos/nepu/`）复制到工作区。
-- 使用 `--no-bundled-assets` 可创建空工作区，自行提供所有资源。
+- 默认只把内置 NEPU logo（`assets/logos/nepu/`）复制到工作区，避免每个任务重复复制大体积模板和字体。
+- 确定使用某个模板或字体后，只复制所选文件；也可直接从技能目录读取。
+- 使用 `--assets all` 可复制全部内置 logo、模板和字体。
+- 使用 `--assets none` 或兼容参数 `--no-bundled-assets` 可创建空资源工作区。
 - 已有文件不会被覆盖。
 
 ## 重要提醒

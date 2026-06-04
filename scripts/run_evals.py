@@ -96,7 +96,7 @@ def main() -> int:
         if issues:
             print(f"FAIL: {len(issues)} issue(s) found:")
             for issue in issues:
-                print(f"  • {issue}")
+                print(f"  - {issue}")
             return 1
         print("OK: Eval file structure is valid.")
         return 0
@@ -110,7 +110,7 @@ def main() -> int:
 
     issues = validate_evals(data)
     if issues:
-        print(f"\nWARN: {len(issues)} structural issue(s) — run with --validate for details.")
+        print(f"\nWARN: {len(issues)} structural issue(s) - run with --validate for details.")
         return 1
     return 0
 

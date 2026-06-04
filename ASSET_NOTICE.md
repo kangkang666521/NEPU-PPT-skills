@@ -1,6 +1,6 @@
 # 资源声明
 
-本仓库在 `assets/` 下包含用户提供的东北石油大学（NEPU）logo PNG 文件，方便安装后直接使用。
+本仓库在 `assets/` 下包含用户提供的东北石油大学（NEPU）logo、便利性 PPTX 模板、字体包和图表参考资源。
 
 本项目**不是**东北石油大学官方发布。内置资源作为便利材料提供，适用于有权使用它们的用户。在公开、商业、机构或再分发使用前，请确认你的使用符合原始资源来源、版权条款、商标规则、学校视觉形象要求以及你所在单位或活动组织方的规定。
 
@@ -10,7 +10,10 @@
 
 ```text
 assets/logos/nepu/    NEPU logo PNG 变体
-assets/fonts/         可选字体包（暂未内置）
+assets/templates/     便利性 PPTX 模板（非 NEPU 官方模板）
+assets/fonts/         可选字体包
+assets/chart-atlas/   图表参考图
+assets/figures4papers/ 科研图表示例
 ```
 
 ## 用户实用规则

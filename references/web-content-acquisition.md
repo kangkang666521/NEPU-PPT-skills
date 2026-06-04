@@ -54,6 +54,8 @@ For every source record:
 
 Use `scripts/web_collect.py` to fetch public pages, extract headings/paragraph snippets, list image candidates, and optionally download images with provenance records.
 
+The helper accepts only HTTP/HTTPS URLs, rejects non-image downloads for image candidates, and applies page/image byte limits. Raise the limits explicitly only for a trusted source that requires it.
+
 Example:
 
 ```bash

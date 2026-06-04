@@ -30,6 +30,16 @@
       ]
     },
     {
+      "id": "quality-first-standard-speed",
+      "prompt": "Create a standard 6-slide NEPU course presentation from the provided outline. I did not request speaker notes, web research, scientific plotting, or Office compatibility testing.",
+      "expected_output": "Assistant produces an editable PPTX, runs structural validation and one rendered visual QA pass, fixes and rerenders only if defects are found, and skips unrequested expensive work.",
+      "assertions": [
+        { "name": "quality_checks_retained", "description": "Structural validation and rendered visual QA are completed before delivery." },
+        { "name": "no_unrequested_work", "description": "No speaker notes, web collection, scientific plotting, Office COM validation, gallery generation, or eval run is performed." },
+        { "name": "conditional_rerender", "description": "A second generation/render is performed only when the first QA pass finds a defect requiring correction." }
+      ]
+    },
+    {
       "id": "revision-safety-versioned-output",
       "prompt": "Take the existing PPTX file 'report__20250501-120000__r02.pptx' and update slide 3's chart with new data. The user also edited slide 5's title manually.",
       "expected_output": "Assistant creates a new versioned file (e.g., report__YYYYMMDD-HHMMSS__r03.pptx), preserves slide 5's manual edits, and only changes slide 3.",

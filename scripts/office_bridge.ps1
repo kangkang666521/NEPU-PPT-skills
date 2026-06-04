@@ -40,33 +40,28 @@ function Test-PresentationWithApp {
     if ($null -eq $app) {
       return [pscustomobject]@{ engine = $Name; ok = $false; error = "COM ProgID unavailable"; slides = 0; output = $null }
     }
-    try { $app.Visible = $VisibleApp } catch {}
+    try { $app.Visible = $(if ($VisibleApp) { -1 } else { 0 }) } catch {}
     $pres = $app.Presentations.Open($InputPath)
     $slides = $pres.Slides.Count
     if ($DoSave) {
-      if ([string]::IsNullOrWhiteSpace($Output)) {
-        $pres.Save()
-        $saved = $InputPath
-      } else {
-        $outDir = Split-Path -Parent $Output
-        if ($outDir) { New-Item -ItemType Directory -Force -Path $outDir | Out-Null }
-        if (Test-Path -LiteralPath $Output) { Remove-Item -LiteralPath $Output -Force }
-        try {
-          # PowerPoint and WPS both use 24 for Open XML presentation in the PowerPoint object model.
-          $pres.SaveAs($Output, 24)
-        } catch {
-          $pres.SaveAs($Output)
-        }
-        if (Test-Path -LiteralPath $Output) {
-          Set-ItemProperty -LiteralPath $Output -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue
-          Unblock-File -LiteralPath $Output -ErrorAction SilentlyContinue
-        }
-        $saved = $Output
+      $outDir = Split-Path -Parent $Output
+      if ($outDir) { New-Item -ItemType Directory -Force -Path $outDir | Out-Null }
+      try {
+        # PowerPoint and WPS both use 24 for Open XML presentation in the PowerPoint object model.
+        $pres.SaveAs($Output, 24)
+      } catch {
+        $pres.SaveAs($Output)
       }
+      if (Test-Path -LiteralPath $Output) {
+        Set-ItemProperty -LiteralPath $Output -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue
+        Unblock-File -LiteralPath $Output -ErrorAction SilentlyContinue
+      }
+      $saved = $Output
     } else {
       $saved = $null
     }
     $pres.Close()
+    Close-ComObject $pres
     $pres = $null
     return [pscustomobject]@{ engine = $Name; ok = $true; error = $null; slides = $slides; output = $saved }
   } catch {
@@ -86,9 +81,18 @@ function Test-PresentationWithApp {
 }
 
 $resolvedInput = (Resolve-Path -LiteralPath $InputPptx).Path
-if (-not $ValidateOnly -and [string]::IsNullOrWhiteSpace($OutputPptx)) {
-  # Save in place only when caller explicitly omits output; keep files non-readonly.
-  Set-ItemProperty -LiteralPath $resolvedInput -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue
+$resolvedOutput = ""
+if (-not $ValidateOnly) {
+  if ([string]::IsNullOrWhiteSpace($OutputPptx)) {
+    throw "OutputPptx is required unless -ValidateOnly is used. In-place saves are disabled."
+  }
+  $resolvedOutput = [System.IO.Path]::GetFullPath($OutputPptx)
+  if ($resolvedOutput -eq $resolvedInput) {
+    throw "OutputPptx must differ from InputPptx. In-place saves are disabled."
+  }
+  if (Test-Path -LiteralPath $resolvedOutput) {
+    throw "Output already exists: $resolvedOutput. Use a new versioned path."
+  }
 }
 
 $engines = @()
@@ -105,7 +109,7 @@ foreach ($engineInfo in $engines) {
     -ProgId $engineInfo.progid `
     -Name $engineInfo.name `
     -InputPath $resolvedInput `
-    -Output $OutputPptx `
+    -Output $resolvedOutput `
     -DoSave (-not $ValidateOnly) `
     -VisibleApp ([bool]$Visible)
   $results += $result

@@ -1,6 +1,6 @@
 # Speaker Notes And Presentation Script
 
-Use this reference when the user asks for 演讲稿, 讲稿, speaker notes, presentation script, 备注, or when a deck is meant for live presentation.
+Use this reference when the user asks for 演讲稿, 讲稿, speaker notes, presentation script, or 备注. Do not generate notes merely because a deck may be presented live.
 
 ## Goal
 

@@ -21,6 +21,8 @@ Before telling the user that a PPTX opens:
 - Close the document cleanly.
 - Remove inherited read-only attributes on generated copies.
 - Prefer a short ASCII output path for compatibility handoff when the user reports open failures.
+- Use `-ValidateOnly` for read-only checks. Re-saving requires a new `-OutputPptx` path; in-place saves are disabled.
+- Existing output files are never overwritten; always use a new versioned output path.
 
 If PowerPoint COM returns `RPC_E_CALL_REJECTED`, check whether desktop PowerPoint is actually installed and registered. On systems with only Microsoft 365 Hub, WPS, or LibreOffice, use WPS/LibreOffice for validation instead of repeatedly calling PowerPoint COM.
 

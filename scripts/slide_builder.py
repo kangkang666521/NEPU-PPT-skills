@@ -23,8 +23,8 @@ from typing import Any
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.util import Inches, Pt, Emu
+from pptx.enum.text import PP_ALIGN
+from pptx.util import Inches, Pt
 
 
 # ── NEPU color palette ────────────────────────────────────────────
@@ -33,6 +33,7 @@ PALETTE: dict[str, str] = {
     "dark_blue": "#00335C",
     "red": "#C41230",
     "gold": "#CFB87C",
+    "green": "#2D6A4F",
     "ink": "#1A1A2E",
     "body": "#3A4658",
     "muted": "#6B778A",
@@ -69,6 +70,9 @@ THEME_PRESETS = {
         "accent": "gold",
         "bg": "dark_blue",
         "text": "white",
+        "body": "divider",
+        "muted": "gold",
+        "light_bg": "ink",
         "title_bar": "dark_blue",
     },
     "oilfield-green": {
@@ -113,6 +117,9 @@ class NepuSlideBuilder:
 
     def _add_slide(self) -> Any:
         slide = self.prs.slides.add_slide(self._blank_layout)
+        fill = slide.background.fill
+        fill.solid()
+        fill.fore_color.rgb = _rgb(self._c("bg"))
         self._slide_count += 1
         return slide
 
@@ -120,6 +127,13 @@ class NepuSlideBuilder:
         """Resolve color key → hex string."""
         color_key = self.colors.get(key, key)
         return PALETTE.get(color_key, PALETTE["ink"])
+
+    @staticmethod
+    def _require_file(path: str | Path, label: str) -> str:
+        resolved = Path(path).expanduser().resolve()
+        if not resolved.is_file():
+            raise FileNotFoundError(f"{label} does not exist: {resolved}")
+        return str(resolved)
 
     @staticmethod
     def _add_textbox(slide, left: float, top: float, width: float, height: float,
@@ -150,21 +164,43 @@ class NepuSlideBuilder:
         shape.line.fill.background()
         return shape
 
+    @staticmethod
+    def _add_picture_contain(
+        slide,
+        path: str,
+        left: float,
+        top: float,
+        width: float,
+        height: float,
+    ) -> Any:
+        """Add a picture without distortion, centered inside an inch-based box."""
+        box_left = Inches(left)
+        box_top = Inches(top)
+        box_width = Inches(width)
+        box_height = Inches(height)
+        picture = slide.shapes.add_picture(path, box_left, box_top)
+        scale = min(box_width / picture.width, box_height / picture.height)
+        picture.width = int(picture.width * scale)
+        picture.height = int(picture.height * scale)
+        picture.left = int(box_left + (box_width - picture.width) / 2)
+        picture.top = int(box_top + (box_height - picture.height) / 2)
+        return picture
+
     # ── slide patterns ─────────────────────────────────────────────
 
     def add_cover(self, title: str, *, subtitle: str = "",
                   logo_path: str | None = None) -> None:
         """Full-bleed cover slide with primary-color background."""
+        logo = self._require_file(logo_path, "Logo") if logo_path else None
         slide = self._add_slide()
 
         # Full-slide background rect
-        self._add_rect(slide, 0, 0, self.sw, self.sh, fill_color=self._c("primary"))
+        cover_bg = self._c("bg") if self.theme_name == "clean-white" else self._c("primary")
+        self._add_rect(slide, 0, 0, self.sw, self.sh, fill_color=cover_bg)
 
         # Logo (top-right, small)
-        if logo_path and Path(logo_path).exists():
-            logo = slide.shapes.add_picture(
-                logo_path, Inches(self.sw - 2.2), Inches(0.4), Inches(1.8), Inches(0.7)
-            )
+        if logo:
+            self._add_picture_contain(slide, logo, self.sw - 2.2, 0.4, 1.8, 0.7)
 
         # Title — centered, bold
         title_y = self.sh * 0.35
@@ -177,10 +213,17 @@ class NepuSlideBuilder:
 
         # Subtitle
         if subtitle:
+            subtitle_color = (
+                self._c("text")
+                if self.theme_name == "clean-white"
+                else self._c("accent")
+                if self.theme_name == "petro-gold"
+                else self._c("white")
+            )
             self._add_textbox(
                 slide, 1.5, title_y + 1.5, self.sw - 3.0, 0.8,
                 text=subtitle, font_size=18, bold=False,
-                color=self._c("accent") if self.theme_name == "petro-gold" else self._c("muted"),
+                color=subtitle_color,
                 alignment=PP_ALIGN.CENTER,
             )
 
@@ -195,7 +238,11 @@ class NepuSlideBuilder:
         slide = self._add_slide()
 
         # Full-slide dark background
-        bg_color = self._c("accent")
+        bg_color = (
+            self._c("primary")
+            if self.theme_name in {"petro-gold", "oilfield-green"}
+            else self._c("accent")
+        )
         self._add_rect(slide, 0, 0, self.sw, self.sh, fill_color=bg_color)
 
         # Left accent bar
@@ -261,24 +308,25 @@ class NepuSlideBuilder:
           - "asymmetric-70-30": figure left 70%, text right 30%
           - "top-title": title bar at top, figure below
         """
+        if layout not in {"full", "asymmetric-70-30", "top-title"}:
+            raise ValueError(f"Unknown figure layout: {layout}")
+        figure = self._require_file(figure_path, "Figure")
         slide = self._add_slide()
 
         if layout == "full":
-            if Path(figure_path).exists():
-                slide.shapes.add_picture(figure_path, Inches(0), Inches(0),
-                                         Inches(self.sw), Inches(self.sh))
+            self._add_picture_contain(slide, figure, 0, 0, self.sw, self.sh)
 
         elif layout == "asymmetric-70-30":
             # Left: figure
             fig_w = self.sw * 0.68
-            if Path(figure_path).exists():
-                slide.shapes.add_picture(figure_path, Inches(0.3), Inches(0.5),
-                                         Inches(fig_w - 0.3), Inches(self.sh - 1.2))
+            self._add_picture_contain(
+                slide, figure, 0.3, 0.5, fig_w - 0.3, self.sh - 1.2
+            )
             # Right: claim column
             if claim:
                 self._add_textbox(
                     slide, fig_w + 0.3, 1.5, self.sw - fig_w - 0.8, 2.0,
-                    text=claim, font_size=16, bold=True,
+                    text=claim, font_size=18, bold=True,
                     color=self._c("text"),
                 )
             if caption:
@@ -298,12 +346,9 @@ class NepuSlideBuilder:
                 # Underline
                 self._add_rect(slide, 0.8, 0.95, 1.5, 0.03,
                                fill_color=self._c("primary"))
-            if Path(figure_path).exists():
-                slide.shapes.add_picture(figure_path, Inches(0.5), Inches(1.2),
-                                         Inches(self.sw - 1.0), Inches(self.sh - 1.8))
-
-        else:
-            raise ValueError(f"Unknown figure layout: {layout}")
+            self._add_picture_contain(
+                slide, figure, 0.5, 1.2, self.sw - 1.0, self.sh - 1.8
+            )
 
         # Speaker notes
         if notes:
@@ -313,6 +358,13 @@ class NepuSlideBuilder:
                          title: str = "",
                          header_color: str | None = None) -> None:
         """Comparison/matrix slide with a simple table."""
+        if not headers:
+            raise ValueError("Matrix slide requires at least one header")
+        for index, row in enumerate(rows, start=1):
+            if len(row) != len(headers):
+                raise ValueError(
+                    f"Matrix row {index} has {len(row)} cells; expected {len(headers)}"
+                )
         slide = self._add_slide()
 
         if header_color is None:
@@ -322,7 +374,7 @@ class NepuSlideBuilder:
         if title:
             self._add_textbox(
                 slide, 0.8, 0.3, self.sw - 1.6, 0.7,
-                text=title, font_size=20, bold=True,
+                text=title, font_size=22, bold=True,
                 color=self._c("text"),
             )
 
@@ -332,7 +384,7 @@ class NepuSlideBuilder:
         table_left = 0.8
         table_top = 1.2 if title else 0.5
         table_w = self.sw - 1.6
-        table_h = self.sh - table_top - 0.5
+        table_h = min(self.sh - table_top - 0.5, max(1.4, n_rows * 0.65))
 
         table = slide.shapes.add_table(n_rows, n_cols,
                                        Inches(table_left), Inches(table_top),
@@ -361,11 +413,12 @@ class NepuSlideBuilder:
                 cell = table.cell(i + 1, j)
                 cell.text = str(val)
                 for p in cell.text_frame.paragraphs:
-                    p.font.size = Pt(11)
+                    p.font.size = Pt(12)
                     p.font.color.rgb = _rgb(self._c("text"))
-                if i % 2 == 1:
-                    cell.fill.solid()
-                    cell.fill.fore_color.rgb = _rgb(self._c("light_bg"))
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = _rgb(
+                    self._c("light_bg") if i % 2 == 1 else self._c("bg")
+                )
 
     def add_bullet_slide(self, title: str, bullets: list[str], *,
                          two_column: bool = False) -> None:
@@ -378,7 +431,7 @@ class NepuSlideBuilder:
         # Title
         self._add_textbox(
             slide, 0.8, 0.3, self.sw - 1.6, 0.7,
-            text=title, font_size=22, bold=True, color=self._c("text"),
+            text=title, font_size=24, bold=True, color=self._c("text"),
         )
         # Underline
         self._add_rect(slide, 0.8, 0.95, 1.2, 0.03, fill_color=self._c("primary"))
@@ -391,13 +444,13 @@ class NepuSlideBuilder:
                 text = "\n".join(f"• {b}" for b in lst)
                 self._add_textbox(
                     slide, 0.8 + self.sw * offset, 1.4, self.sw * 0.43 - 0.8, self.sh - 2.0,
-                    text=text, font_size=13, bold=False, color=self._c("body"),
+                    text=text, font_size=15, bold=False, color=self._c("body"),
                 )
         else:
             bullet_text = "\n".join(f"• {b}" for b in bullets)
             self._add_textbox(
-                slide, 0.8, 1.4, self.sw * 0.7, self.sh - 2.0,
-                text=bullet_text, font_size=13, bold=False, color=self._c("body"),
+                slide, 0.8, 1.4, self.sw - 1.6, self.sh - 2.0,
+                text=bullet_text, font_size=16, bold=False, color=self._c("body"),
             )
 
     def add_conclusion(self, takeaways: list[str], *,
@@ -413,7 +466,7 @@ class NepuSlideBuilder:
             text = "\n".join(f"{i+1}. {t}" for i, t in enumerate(takeaways))
             self._add_textbox(
                 slide, 1.5, self.sh * 0.2, self.sw - 3.0, self.sh * 0.5,
-                text=text, font_size=16, bold=False,
+                text=text, font_size=18, bold=False,
                 color=self._c("white"),
                 alignment=PP_ALIGN.LEFT,
             )
@@ -434,6 +487,11 @@ class NepuSlideBuilder:
                              title: str = "", cols: int = 3,
                              captions: list[str] | None = None) -> None:
         """Grid of images with optional title and captions."""
+        if cols < 1:
+            raise ValueError("Image grid columns must be at least 1")
+        if not image_paths:
+            raise ValueError("Image grid requires at least one image")
+        images = [self._require_file(path, f"Image {index}") for index, path in enumerate(image_paths, start=1)]
         slide = self._add_slide()
 
         if title:
@@ -447,15 +505,13 @@ class NepuSlideBuilder:
         cell_h = (self.sh - 1.8) / max(rows, 1)
         top_offset = 1.2 if title else 0.4
 
-        for i, img_path in enumerate(image_paths):
+        for i, img_path in enumerate(images):
             r, c = divmod(i, cols)
             left = 0.5 + c * cell_w + 0.1
             top = top_offset + r * cell_h + 0.1
-            if Path(img_path).exists():
-                slide.shapes.add_picture(
-                    img_path, Inches(left), Inches(top),
-                    Inches(cell_w - 0.2), Inches(cell_h - 0.35),
-                )
+            self._add_picture_contain(
+                slide, img_path, left, top, cell_w - 0.2, cell_h - 0.35
+            )
             if captions and i < len(captions):
                 self._add_textbox(
                     slide, left, top + cell_h - 0.35, cell_w - 0.2, 0.3,
@@ -467,11 +523,26 @@ class NepuSlideBuilder:
         """Return a blank slide for fully custom layout."""
         return self._add_slide()
 
+    def set_speaker_notes(self, slide_number: int, notes: str) -> None:
+        """Set speaker notes on a 1-based slide number."""
+        if slide_number < 1 or slide_number > self._slide_count:
+            raise IndexError(
+                f"Slide number {slide_number} is outside 1-{self._slide_count}"
+            )
+        self.prs.slides[slide_number - 1].notes_slide.notes_text_frame.text = notes
+
     # ── output ──────────────────────────────────────────────────────
 
-    def save(self, path: str | Path) -> str:
-        """Save the presentation and return the absolute path."""
+    def save(self, path: str | Path, *, overwrite: bool = False) -> str:
+        """Save the presentation and return the absolute path.
+
+        Refuses to overwrite by default to protect user-edited and delivered files.
+        """
         output = Path(path).resolve()
+        if output.exists() and not overwrite:
+            raise FileExistsError(
+                f"Refusing to overwrite existing presentation: {output}"
+            )
         output.parent.mkdir(parents=True, exist_ok=True)
         self.prs.save(str(output))
         return str(output)

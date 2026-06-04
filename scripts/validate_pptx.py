@@ -18,14 +18,13 @@ from typing import Any
 
 try:
     from pptx import Presentation
-    from pptx.util import Inches, Pt, Emu
 except ImportError:
     print("python-pptx is required: pip install python-pptx", file=sys.stderr)
     raise SystemExit(2)
 
 
 # Approximate character widths (pt) for common scripts
-# CJK characters ≈ 1.0 em; Latin ≈ 0.55 em
+# CJK characters use about 1.0 em; Latin uses about 0.55 em.
 _APPROX_CHAR_WIDTH = {
     "cjk": 1.0,   # multiplier of font size
     "latin": 0.55,
@@ -53,9 +52,18 @@ def _has_cjk(text: str) -> bool:
 
 def estimate_text_width_pt(text: str, font_size_pt: float) -> float:
     """Estimate rendered text width in points."""
-    cjk_count = sum(1 for ch in text if _has_cjk(ch))
-    latin_count = len(text) - cjk_count
-    return (cjk_count * _APPROX_CHAR_WIDTH["cjk"] + latin_count * _APPROX_CHAR_WIDTH["latin"]) * font_size_pt
+    widths = []
+    for line in text.splitlines() or [""]:
+        cjk_count = sum(1 for ch in line if _has_cjk(ch))
+        latin_count = len(line) - cjk_count
+        widths.append(
+            (
+                cjk_count * _APPROX_CHAR_WIDTH["cjk"]
+                + latin_count * _APPROX_CHAR_WIDTH["latin"]
+            )
+            * font_size_pt
+        )
+    return max(widths, default=0.0)
 
 
 def check_shape_bounds(left: int, top: int, width: int, height: int,
@@ -76,6 +84,26 @@ def check_shape_bounds(left: int, top: int, width: int, height: int,
     if bottom_emu > slide_h_emu:
         issues.append(f"shape extends below slide (bottom={bottom_emu}, max={slide_h_emu})")
     return issues
+
+
+def layout_signature(slide: Any, slide_w_emu: int, slide_h_emu: int) -> tuple:
+    """Return a coarse geometry-aware signature for layout repetition checks."""
+    parts = []
+    for shape in slide.shapes:
+        left = shape.left or 0
+        top = shape.top or 0
+        width = shape.width or 0
+        height = shape.height or 0
+        parts.append(
+            (
+                int(shape.shape_type),
+                round(left / slide_w_emu * 4),
+                round(top / slide_h_emu * 4),
+                round(width / slide_w_emu * 4),
+                round(height / slide_h_emu * 4),
+            )
+        )
+    return tuple(sorted(parts))
 
 
 def validate_pptx(path: Path) -> dict[str, Any]:
@@ -102,6 +130,8 @@ def validate_pptx(path: Path) -> dict[str, Any]:
         return report
 
     sw, sh = slide_dims(prs)
+    slide_w_emu = int(sw * 914400)
+    slide_h_emu = int(sh * 914400)
     slide_count = len(prs.slides)
     stats: dict[str, Any] = {
         "slide_count": slide_count,
@@ -123,11 +153,8 @@ def validate_pptx(path: Path) -> dict[str, Any]:
             stats["slides_with_notes"] += 1
 
         has_image_this_slide = False
-        shape_types: list[str] = []
-
         for shape in slide.shapes:
             stats["total_shapes"] += 1
-            shape_types.append(shape.shape_type)
 
             # Bounds check
             left = shape.left if shape.left is not None else 0
@@ -147,7 +174,7 @@ def validate_pptx(path: Path) -> dict[str, Any]:
                     stats["small_images"] += 1
                     report["warnings"].append(
                         f"Slide {slide_idx}: image '{shape.name}' is small "
-                        f"({img_w_inches:.1f}\"×{img_h_inches:.1f}\"), may be unreadable"
+                        f"({img_w_inches:.1f}\" x {img_h_inches:.1f}\"), may be unreadable"
                     )
 
             # Text overflow check
@@ -178,11 +205,38 @@ def validate_pptx(path: Path) -> dict[str, Any]:
                             stats["text_overflow_slides"].add(slide_idx)
                             break  # one warning per shape
 
+            if getattr(shape, "has_table", False):
+                for row in shape.table.rows:
+                    for column_index, cell in enumerate(row.cells):
+                        for paragraph in cell.text_frame.paragraphs:
+                            full_text = paragraph.text
+                            if not full_text:
+                                continue
+                            for pattern in PLACEHOLDER_PATTERNS:
+                                if pattern.search(full_text):
+                                    report["warnings"].append(
+                                        f"Slide {slide_idx}: placeholder text found in table: "
+                                        f"'{full_text[:60]}'"
+                                    )
+                                    stats["placeholder_matches"].append(full_text[:60])
+                            font_size = 12
+                            for run in paragraph.runs:
+                                if run.font.size:
+                                    font_size = run.font.size / 12700
+                                    break
+                            if estimate_text_width_pt(full_text, font_size) > (
+                                shape.table.columns[column_index].width / 12700
+                            ) * 1.15:
+                                stats["text_overflow_slides"].add(slide_idx)
+                                break
+
         if has_image_this_slide:
             stats["slides_with_images"] += 1
 
-        # Layout repeat detection: collect shape type signatures
-        stats.setdefault("layout_signatures", []).append(tuple(sorted(shape_types)))
+        # Layout repeat detection: include coarse geometry to avoid false matches.
+        stats.setdefault("layout_signatures", []).append(
+            layout_signature(slide, slide_w_emu, slide_h_emu)
+        )
 
     # Post-process stats
     stats["text_overflow_slides"] = sorted(stats["text_overflow_slides"])
@@ -196,7 +250,7 @@ def validate_pptx(path: Path) -> dict[str, Any]:
         repeats = {k: v for k, v in sig_counts.items() if v >= 5}
         if repeats:
             report["warnings"].append(
-                f"Layout pattern repeated ≥5 times in {dict(repeats)}. "
+                f"Layout pattern repeated >=5 times in {dict(repeats)}. "
                 f"Unique layouts: {stats['unique_layout_count']}/{stats['slide_count']}"
             )
 
@@ -205,7 +259,7 @@ def validate_pptx(path: Path) -> dict[str, Any]:
         report["valid"] = False
         report["errors"].append("PPTX has zero slides")
     elif slide_count < 3:
-        report["warnings"].append(f"Only {slide_count} slides — confirm this is intended")
+        report["warnings"].append(f"Only {slide_count} slides - confirm this is intended")
 
     # Notes coverage
     if stats["slides_with_notes"] > 0 and stats["slides_with_notes"] < slide_count:
@@ -233,7 +287,7 @@ def main() -> int:
         print(f"Valid: {report['valid']}")
         stats = report.get("stats", {})
         print(f"Slides: {stats.get('slide_count', '?')} | "
-              f"Size: {stats.get('slide_width_inches', '?')}\"×{stats.get('slide_height_inches', '?')}\" | "
+              f"Size: {stats.get('slide_width_inches', '?')}\" x {stats.get('slide_height_inches', '?')}\" | "
               f"Aspect: {stats.get('aspect_ratio', '?')}")
         print(f"Shapes: {stats.get('total_shapes', 0)} | "
               f"Text boxes: {stats.get('total_text_boxes', 0)}")
@@ -247,18 +301,18 @@ def main() -> int:
         errors = report.get("errors", [])
         warnings = report.get("warnings", [])
         if errors:
-            print(f"\n❌ ERRORS ({len(errors)}):")
+            print(f"\nERRORS ({len(errors)}):")
             for e in errors:
-                print(f"  • {e}")
+                print(f"  - {e}")
         if warnings:
-            print(f"\n⚠ WARNINGS ({len(warnings)}):")
+            print(f"\nWARNINGS ({len(warnings)}):")
             for w in warnings[:20]:
-                print(f"  • {w}")
+                print(f"  - {w}")
             if len(warnings) > 20:
-                print(f"  … and {len(warnings) - 20} more")
+                print(f"  ... and {len(warnings) - 20} more")
 
         if not errors and not warnings:
-            print("\n✓ No issues found.")
+            print("\nOK: No issues found.")
 
     return 0 if report["valid"] else 1
 

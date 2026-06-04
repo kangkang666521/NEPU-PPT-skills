@@ -9,7 +9,7 @@ description: Create Northeast Petroleum University (东北石油大学 / NEPU / 
 
 ## 快速开始
 
-1. 创建工作区：`python scripts/create_workspace.py ./my-nepu-deck --profile academic-report`
+1. 创建工作区：`python scripts/create_workspace.py ./my-nepu-deck --profile academic-report --quality auto`
 2. 将素材放入 `source/`、`assets/logos/`、`assets/templates/`、`assets/fonts/`
 3. 识别场景：学术汇报 / 答辩 / 课程展示 / 学生活动 / 课题组会 / 行政党建 / 文献汇报
 4. 选风格 → [references/nepu-template-selection.md](references/nepu-template-selection.md)
@@ -19,8 +19,20 @@ description: Create Northeast Petroleum University (东北石油大学 / NEPU / 
    - 网页素材 → [references/web-content-acquisition.md](references/web-content-acquisition.md)
    - 演讲稿 → [references/speaker-notes.md](references/speaker-notes.md)
    - 修订已有 PPT → [references/revision-safety.md](references/revision-safety.md)
-6. 自审修订 → [references/visual-qa.md](references/visual-qa.md)
+6. 结构审计 + 视觉自审 → [references/visual-qa.md](references/visual-qa.md)
 7. Office 验证（按需）→ [references/office-compatibility.md](references/office-compatibility.md) + `scripts/office_bridge.ps1`
+
+## 质量优先的提速规则
+
+默认使用 `auto`：普通任务进入 `standard`，答辩自动进入 `rigorous`。两档都保留结构审计和视觉 QA，只跳过不影响质量的重复工作：
+
+- **按需加载**：只读取当前任务需要的 reference；不要预读全部参考资料、图集或演示文件。
+- **按需资源**：工作区默认仅复制 logo。模板和字体直接从技能目录读取，确定使用后只复制所选文件；不要复制全部约 320 MB 资源。
+- **一次构建，一次必检**：生成后运行 `scripts/validate_pptx.py`，渲染一次全 deck 并检查 contact sheet；对图表、表格、流程图、密集文本页查看全尺寸预览。
+- **发现缺陷才重生成**：必须修复 high 缺陷和可修复的 medium 缺陷并重新验证；若首轮无这些缺陷，不做形式化的二次生成。
+- **自动升级 `rigorous`**：论文/文献汇报、答辩、科研评审、复杂图表/流程图、已有 PPT 修订，或用户明确要求高质量时，执行完整视觉复核和修订循环。
+- **真正按需**：演讲者备注仅在用户要求时生成；网页采集和新科研图仅在任务内容确实依赖或用户要求时执行。打开失败、兼容性敏感或用户要求时才运行 Office/WPS 验证。
+- **禁止无关任务**：生成用户 PPT 时不要运行 `run_evals.py`、`generate_gallery.py`，也不要遍历或复制未使用模板。
 
 ## 核心行为准则
 
@@ -28,7 +40,7 @@ description: Create Northeast Petroleum University (东北石油大学 / NEPU / 
 - 产出可编辑 PPTX，非全页截图。默认 16:9。
 - **保守修订模式**：对已有 PPT 保留好内容，仅修复可验证问题。每次修订创建带时间戳新版本文件，不覆盖源文件。
 - **论文输入**：从 PDF 提取论证主线，分类论文类型，裁剪图表为证据非装饰。
-- **演讲者备注**：生成并插入 PPT 备注区，用户修正过的页面锁定不动。
+- **演讲者备注**：仅在用户要求时生成并插入 PPT 备注区；用户修正过的页面锁定不动。
 - **图片习惯追踪**：学习用户插入的图片风格，后续修订保持一致性。
 - **科研绘图**：Python (matplotlib + seaborn)，使用 `scripts/plot_style.py`。
 - **流程图**：原生 PowerPoint 形状优先，保持可编辑。
@@ -113,9 +125,11 @@ description: Create Northeast Petroleum University (东北石油大学 / NEPU / 
 
 ## 自审修订循环
 
-每版 PPTX 至少一轮显式自审，不可初稿直接交付：
+每版 PPTX 至少一轮显式检查，不可初稿直接交付：
 
-1. 检查 PPTX → 2. 列出缺陷+级别+幻灯片号 → 3. 修复 high/medium → 4. 重新生成 → 5. 重新验证
+1. 结构审计 + 渲染检查 → 2. 列出缺陷+级别+幻灯片号 → 3. 修复 high/可修复 medium → 4. 有修复时重新生成并验证
+
+首轮检查未发现 high 或可修复 medium 缺陷时，可直接交付，不为满足流程而重复生成。
 
 | 级别 | 标准 | 处理 |
 |---|---|---|

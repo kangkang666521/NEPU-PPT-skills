@@ -1,6 +1,6 @@
 # Visual QA
 
-Use this checklist after every substantial deck generation or revision. The goal is to catch layout defects by looking at rendered slides, not only by inspecting the PPTX object tree.
+Use this checklist after every substantial deck generation or revision. The goal is to catch layout defects by looking at rendered slides, not only by inspecting the PPTX object tree, while avoiding repeated renders that do not improve quality.
 
 ## Required Outputs
 
@@ -16,9 +16,11 @@ For every delivery, create or update:
 2. Review the contact sheet first to catch global rhythm, color, and spacing problems.
 3. Open full-size previews for slides with dense text, images, charts, tables, or diagrams.
 4. Fix the source PPTX, script, or JSX source.
-5. Rerender and repeat until the deck passes the checks below.
+5. If fixes were required, rerender and repeat until the deck passes the checks below.
 
 Do not mark the deck complete after finding a visible defect unless the defect has been fixed or explicitly accepted by the user.
+
+If the first structural audit and rendered review find no high or fixable medium defects, record the pass and deliver without a redundant second render.
 
 ## Layout Checks
 
@@ -82,15 +84,15 @@ After creating the first PPTX draft, run at least one explicit self-review pass 
 1. Inspect the generated PPTX and extracted assets.
 2. Write a short defect list with severity (`high`, `medium`, `low`) and slide numbers.
 3. Correct every high-severity issue and every medium-severity issue that can be fixed without expanding the task substantially.
-4. Regenerate the PPTX after edits.
-5. Re-run verification and update `planning/visual-qa.md` with what was checked, what was fixed, and what remains.
+4. Regenerate the PPTX only when edits were required.
+5. Re-run verification after edits and update `planning/visual-qa.md` with what was checked, what was fixed, and what remains.
 
 ### Defect Severity
 
 | Severity | Criteria | Action |
 |---|---|---|
 | `high` | Clipped scientific evidence (axes, legends, panel labels), unreadable main evidence, overlapping text/figures, text cut off by box, wrong slide order, fabricated claims | Must fix before delivery |
-| `medium` | Overly dense slides, rigid AI-looking layouts, weak crop margins, detached captions, excessive repeated layouts, missing speaker notes | Fix when feasible |
+| `medium` | Overly dense slides, rigid AI-looking layouts, weak crop margins, detached captions, excessive repeated layouts, missing requested/planned speaker notes | Fix when feasible |
 | `low` | Minor alignment imperfections, palette refinements, optional split of readable but dense figure | Note and defer |
 
 ## Package & Delivery Checks

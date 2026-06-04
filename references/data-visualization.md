@@ -14,6 +14,7 @@ Use a Nature-like scientific style as a direction, not as a journal claim:
 - direct labels when they reduce legend searching
 - consistent typography and capitalization
 - short source notes when data are synthesized or user-provided
+- PNG for slide insertion plus editable SVG and PDF for revision/reuse
 - enough contrast for projection
 
 ## Figure Contract — Plan Before Plotting

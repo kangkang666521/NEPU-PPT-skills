@@ -5,7 +5,7 @@
 ## Project
 
 - 主入口：`SKILL.md`（加载到 Codex 上下文的技能定义，~10KB）
-- 引用文档：`references/`（24 个 markdown 文件，按需读取）
+- 引用文档：`references/`（按需读取）
 - 工具脚本：`scripts/`（Python/PowerShell）
 - 内置资源：`assets/`（logos、模板、字体、图表参考）
 - 评估：`evals/evals.json`
@@ -16,11 +16,17 @@
 # 创建工作区
 python scripts/create_workspace.py ./output-dir --profile academic-report
 
+# 独立 Python 环境安装依赖
+python -m pip install -r requirements.txt
+
 # 网页采集
 python scripts/web_collect.py ./output-dir URL1 URL2 --download-images
 
 # Office 兼容验证（PowerShell）
 powershell -File scripts/office_bridge.ps1 -InputPptx file.pptx -ValidateOnly
+
+# 项目烟雾检查
+python scripts/self_check.py
 ```
 
 ## Architecture
@@ -31,6 +37,7 @@ powershell -File scripts/office_bridge.ps1 -InputPptx file.pptx -ValidateOnly
 - `scripts/plot_style.py`：Matplotlib NEPU/Nature 样式（色板常量、rcParams、figure 尺寸、保存辅助）
 - `scripts/web_collect.py`：公开网页文本/图片采集（HTML 解析、编码检测、来源记录）
 - `scripts/office_bridge.ps1`：PowerPoint/WPS COM 自动化验证和重新保存
+- `scripts/self_check.py`：无需 pytest 的项目级烟雾检查
 
 ## Conventions
 
