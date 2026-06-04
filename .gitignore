@@ -1,0 +1,28 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Office temporary lock files
+~$*
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Code analysis tool caches
+.codegraph/
+
+# Local runtime output
+.codex-workspace/
+tmp/
+temp/
+*.tmp
+*.bak

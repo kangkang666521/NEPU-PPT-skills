@@ -1,0 +1,92 @@
+{
+  "skill_name": "nepu-ppt-template",
+  "evals": [
+    {
+      "id": "backend-exclusivity-python-missing-package",
+      "prompt": "Use Python to make a Nature-style multi-panel heatmap and flow figure with simulated data. Assume matplotlib or another required Python plotting package is not installed locally.",
+      "expected_output": "The assistant must not fall back to any non-Python plotting backend. It should report the missing Python plotting dependency, provide a Python-only script and install/run instructions, and stop before rendering.",
+      "assertions": [
+        { "name": "no_cross_backend_rendering", "description": "No non-Python preview, SVG, PDF, TIFF, or PNG generated as substitute." },
+        { "name": "selected_backend_blocker_reported", "description": "Response clearly reports missing Python runtime/packages and does not present non-Python figure as completed." }
+      ]
+    },
+    {
+      "id": "figure-contract-generation",
+      "prompt": "I have experimental data showing that Treatment A reduces tumor volume by 45% compared to control (n=12, p<0.01), and Treatment B reduces by 28% (n=12, p=0.03). There's also histological staining showing reduced Ki67. Create a Nature-style figure plan first, then produce the chart.",
+      "expected_output": "Assistant must produce a figure contract (core conclusion, archetype, panel map) BEFORE any plotting code. Python is the default backend.",
+      "assertions": [
+        { "name": "contract_before_code", "description": "Figure contract elements (conclusion, archetype, panel map) appear before plotting code." },
+        { "name": "claim_has_verb", "description": "Core conclusion is a sentence with a verb, not a topic label." }
+      ]
+    },
+    {
+      "id": "anti-template-layout-detection",
+      "prompt": "Create a 9-slide NEPU academic report deck about carbon capture technology. Use petro-blue style.",
+      "expected_output": "The deck should use varied layouts (not all 50/50 split or equal-card templates). No triple-equal cards, pill rows, generic problem/solution/impact grids.",
+      "assertions": [
+        { "name": "layout_variety", "description": "Deck uses at least 3 distinct layout types (e.g., figure-dominant, claim-led, comparison)." },
+        { "name": "no_ai_template", "description": "No triple-equal cards, metric pill rows, or fixed right-explanation rails." },
+        { "name": "not_all_50_50", "description": "Not every slide is a 50/50 split; uses asymmetric layouts where appropriate." }
+      ]
+    },
+    {
+      "id": "revision-safety-versioned-output",
+      "prompt": "Take the existing PPTX file 'report__20250501-120000__r02.pptx' and update slide 3's chart with new data. The user also edited slide 5's title manually.",
+      "expected_output": "Assistant creates a new versioned file (e.g., report__YYYYMMDD-HHMMSS__r03.pptx), preserves slide 5's manual edits, and only changes slide 3.",
+      "assertions": [
+        { "name": "new_version_created", "description": "Output is a new timestamped revision file, not the input file overwritten." },
+        { "name": "user_edits_preserved", "description": "User's manual title edit on slide 5 is preserved." },
+        { "name": "only_requested_change", "description": "Only slide 3 chart is updated; no other slides changed unnecessarily." }
+      ]
+    },
+    {
+      "id": "speaker-notes-sync",
+      "prompt": "Generate a 5-slide course presentation about petroleum geology basics. Include speaker notes for each slide.",
+      "expected_output": "Each slide has speaker notes inserted. Notes match each slide's claim. Notes are in the notes area, not visible slide text.",
+      "assertions": [
+        { "name": "notes_per_slide", "description": "Every slide has a non-empty speaker notes section." },
+        { "name": "notes_match_content", "description": "Notes correspond to each slide's main claim, not generic filler." },
+        { "name": "notes_not_visible", "description": "Speaker notes are in the notes area, not pasted as visible slide text." }
+      ]
+    },
+    {
+      "id": "template-selection-matching",
+      "prompt": "I need a PPT for a 东北石油大学 party-building event (党建活动) celebrating the school anniversary. The audience includes university leaders and party officials.",
+      "expected_output": "Assistant should select nepu-red style and recommend 百廿红 bundled template. The tone should be formal and ceremonial.",
+      "assertions": [
+        { "name": "nepu_red_selected", "description": "nepu-red or equivalent red/ceremonial style is selected." },
+        { "name": "formal_tone", "description": "Design tone is formal, ceremonial, with industrial character." }
+      ]
+    },
+    {
+      "id": "web-acquisition-source-records",
+      "prompt": "Gather public information about Northeast Petroleum University's history and key research achievements from its official website, and include relevant facts in a 5-slide presentation.",
+      "expected_output": "Assistant collects web content, records source URLs and access dates, rewrites content as presentation language (not pasted paragraphs).",
+      "assertions": [
+        { "name": "source_records_kept", "description": "Source URLs and access dates are recorded in planning/web-sources.md or equivalent." },
+        { "name": "content_transformed", "description": "Web content is rewritten as slide claims, not pasted as long paragraphs." },
+        { "name": "copyright_aware", "description": "Images from web are flagged for copyright review before slide insertion." }
+      ]
+    },
+    {
+      "id": "visual-qa-self-review",
+      "prompt": "After generating a 6-slide deck, run a self-review and list any defects found.",
+      "expected_output": "Assistant performs explicit self-review, categorizes issues by severity (high/medium/low), and attempts to fix high-severity issues.",
+      "assertions": [
+        { "name": "explicit_review_performed", "description": "Response includes an explicit self-review section, not just the generated PPTX." },
+        { "name": "severity_classification", "description": "Issues are classified as high/medium/low severity." },
+        { "name": "fixes_attempted", "description": "High-severity issues are fixed before declaring complete." }
+      ]
+    },
+    {
+      "id": "conservative-revision-default",
+      "prompt": "Polish my existing PPTX presentation about AI in education. Make it look better.",
+      "expected_output": "Assistant should default to conservative revision mode: create new version, preserve existing content, only fix verifiable problems (contrast, alignment, overflow).",
+      "assertions": [
+        { "name": "conservative_mode", "description": "New version created, not redesigned from scratch." },
+        { "name": "existing_content_kept", "description": "Slide structure, images, and user text are preserved." },
+        { "name": "only_fixes_applied", "description": "Changes are limited to verifiable fixes (not subjective redesign)." }
+      ]
+    }
+  ]
+}
