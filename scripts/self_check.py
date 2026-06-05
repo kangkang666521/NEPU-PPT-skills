@@ -13,7 +13,7 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_DIR))
 
-from scripts.create_workspace import resolve_quality_mode  # noqa: E402
+from scripts.create_workspace import first_existing_template, resolve_quality_mode, resolve_template_style  # noqa: E402
 from scripts.plot_style import _build_font_family_list, ppt_figure_size, save_ppt_figure  # noqa: E402
 from scripts.slide_builder import NepuSlideBuilder  # noqa: E402
 from scripts.validate_pptx import estimate_text_width_pt, validate_pptx  # noqa: E402
@@ -96,8 +96,14 @@ def check_builder(output_dir: Path) -> None:
 def check_helpers() -> None:
     if resolve_quality_mode("auto", "thesis-defense") != "rigorous":
         raise AssertionError("Thesis defense did not resolve to rigorous QA")
-    if resolve_quality_mode("auto", "academic-report") != "standard":
-        raise AssertionError("Academic report did not resolve to standard QA")
+    if resolve_quality_mode("auto", "academic-report") != "rigorous":
+        raise AssertionError("Academic report did not resolve to rigorous QA")
+    if resolve_quality_mode("auto", "course-presentation") != "standard":
+        raise AssertionError("Course presentation did not resolve to standard QA")
+    if resolve_template_style("auto", "academic-report") != "petro-blue":
+        raise AssertionError("Academic report did not resolve to petro-blue template style")
+    if first_existing_template("petro-blue") is None:
+        raise AssertionError("Default petro-blue template was not found")
 
     parser = PageParser()
     parser.feed("<html><title>NEPU</title><p>alpha <strong>nested</strong> omega</p></html>")

@@ -22,8 +22,26 @@ PROFILES = [
     "admin-briefing",
 ]
 
-ASSET_MODES = ["none", "logos", "all"]
+ASSET_MODES = ["none", "logos", "selected", "all"]
 QUALITY_MODES = ["auto", "standard", "rigorous"]
+TEMPLATE_STYLES = ["auto", "petro-blue", "nepu-red", "petro-gold", "oilfield-green", "clean-white", "none"]
+
+QUALITY_FIRST_PROFILES = {"academic-report", "thesis-defense", "group-meeting"}
+PROFILE_TEMPLATE_STYLE = {
+    "academic-report": "petro-blue",
+    "thesis-defense": "petro-gold",
+    "course-presentation": "petro-blue",
+    "group-meeting": "petro-blue",
+    "student-activity": "oilfield-green",
+    "admin-briefing": "nepu-red",
+}
+TEMPLATE_PATTERNS = {
+    "petro-blue": ["2.*/*16*9*.pptx", "3.*.pptx"],
+    "nepu-red": ["1.*.pptx"],
+    "petro-gold": ["4.*.pptx", "6.*.pptx"],
+    "oilfield-green": ["5.*.pptx", "7.*/*.pptx"],
+    "clean-white": ["2.*/*16*9*.pptx"],
+}
 
 # Data-driven seed files: (relative_path, initial_content, is_json)
 SEED_FILES: list[tuple[str, str, bool]] = [
@@ -113,6 +131,28 @@ def copy_tree_contents(src: Path, dst: Path) -> list[str]:
     return copied
 
 
+def first_existing_template(style: str) -> Path | None:
+    templates_root = BUNDLED_ASSETS / "templates" / "nepu-civilization-office"
+    for pattern in TEMPLATE_PATTERNS.get(style, []):
+        for candidate in sorted(templates_root.glob(pattern)):
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def copy_selected_template(style: str, dst: Path) -> str | None:
+    if style == "none":
+        return None
+    template = first_existing_template(style)
+    if template is None:
+        return None
+    target = dst / template.name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if not target.exists():
+        shutil.copy2(template, target)
+    return str(target.relative_to(dst))
+
+
 def seed_workspace_files(workspace: Path) -> None:
     """Create initial planning/config files if they don't already exist."""
     for rel_path, content, _is_json in SEED_FILES:
@@ -129,6 +169,7 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
         "planned_slides": args.slides,
         "quality_mode": args.quality,
         "asset_mode": args.assets,
+        "template_style": args.template_style,
         "directories": {
             "source": "source",
             "raw_data": "data/raw",
@@ -154,8 +195,9 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
         },
         "web_manifest": "assets/web/sources.json",
         "bundled_assets_copied": args.assets != "none",
+        "selected_template": None,
         "notes": [
-            "Built-in NEPU logos are copied into assets/logos/ by default when present.",
+            "Built-in NEPU logos and the selected scene template are copied by default when present.",
             "Place additional authorized NEPU logos and PPT templates in assets/.",
             "Place raw CSV, Excel, or statistical data in data/raw/.",
             "Place or collect web-supported material under assets/web/ and record provenance in planning/web-sources.md.",
@@ -163,7 +205,7 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
             "Never overwrite user-provided or previously delivered PPTX files; write revisions to output/versions/.",
             "For generated charts, keep plotting code, data, source notes, and outputs under figures/.",
             "For generated diagrams, keep a diagram plan and verify rendered clarity/editability.",
-            "Reference bundled templates and fonts from the skill directory; copy only the selected file when needed.",
+            "Use the selected template as the visual base; copy more bundled assets only when the deck actually needs them.",
         ],
     }
 
@@ -172,7 +214,14 @@ def resolve_quality_mode(requested: str, profile: str) -> str:
     """Resolve automatic QA depth from the task profile."""
     if requested != "auto":
         return requested
-    return "rigorous" if profile == "thesis-defense" else "standard"
+    return "rigorous" if profile in QUALITY_FIRST_PROFILES else "standard"
+
+
+def resolve_template_style(requested: str, profile: str) -> str:
+    """Resolve the default visual template style from the task profile."""
+    if requested != "auto":
+        return requested
+    return PROFILE_TEMPLATE_STYLE.get(profile, "petro-blue")
 
 
 def main() -> None:
@@ -190,8 +239,14 @@ def main() -> None:
     parser.add_argument(
         "--assets",
         choices=ASSET_MODES,
-        default="logos",
-        help="Bundled assets to copy. Default copies logos only; selected templates can be used in place.",
+        default="selected",
+        help="Bundled assets to copy. Default copies logos plus one selected template; use all only when needed.",
+    )
+    parser.add_argument(
+        "--template-style",
+        choices=TEMPLATE_STYLES,
+        default="auto",
+        help="Scene template to copy when assets are not disabled. Auto maps the profile to a NEPU style.",
     )
     parser.add_argument(
         "--no-bundled-assets",
@@ -202,6 +257,7 @@ def main() -> None:
     if args.no_bundled_assets:
         args.assets = "none"
     args.quality = resolve_quality_mode(args.quality, args.profile)
+    args.template_style = resolve_template_style(args.template_style, args.profile)
 
     workspace = args.workspace.resolve()
 
@@ -236,6 +292,7 @@ def main() -> None:
     asset_kinds = {
         "none": (),
         "logos": ("logos",),
+        "selected": ("logos",),
         "all": ("logos", "templates", "fonts"),
     }[args.assets]
     if asset_kinds:
@@ -243,6 +300,18 @@ def main() -> None:
             copied_assets[kind] = copy_tree_contents(
                 BUNDLED_ASSETS / kind, workspace / "assets" / kind
             )
+    if args.assets == "selected":
+        selected_template = copy_selected_template(
+            args.template_style, workspace / "assets" / "templates"
+        )
+        if selected_template:
+            copied_assets["templates"].append(selected_template)
+            manifest["selected_template"] = f"assets/templates/{selected_template}"
+    elif args.assets == "all":
+        selected_template_path = first_existing_template(args.template_style)
+        if selected_template_path:
+            rel_template = selected_template_path.relative_to(BUNDLED_ASSETS / "templates")
+            manifest["selected_template"] = f"assets/templates/{rel_template.as_posix()}"
     manifest["copied_bundled_assets"] = copied_assets
 
     (workspace / "nepu_ppt_task.json").write_text(

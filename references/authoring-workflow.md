@@ -59,6 +59,8 @@ If the proof object depends on public online information or images, read [web-co
 
 ## 5. Build Editable Slides
 
+Use the user-provided template or the selected bundled template as the visual base. `scripts/slide_builder.py` is a scaffold for simple pages and smoke tests; for paper reports, defenses, and complex academic decks, customize layouts against the template instead of relying on the default builder patterns alone.
+
 Prefer native PowerPoint objects:
 
 - text boxes

@@ -25,7 +25,7 @@
 
 运行 `python scripts/create_workspace.py` 时：
 
-- 默认只把内置 NEPU logo（`assets/logos/nepu/`）复制到工作区，避免每个任务重复复制大体积模板和字体。
+- 默认把内置 NEPU logo（`assets/logos/nepu/`）和一个按场景匹配的 PPTX 模板复制到工作区，避免每个任务重复复制大体积模板和字体，同时保留最终 deck 的设计基底。
 - 确定使用某个模板或字体后，只复制所选文件；也可直接从技能目录读取。
 - 使用 `--assets all` 可复制全部内置 logo、模板和字体。
 - 使用 `--assets none` 或兼容参数 `--no-bundled-assets` 可创建空资源工作区。

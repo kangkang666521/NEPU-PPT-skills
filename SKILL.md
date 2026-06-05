@@ -24,14 +24,14 @@ description: Create Northeast Petroleum University (东北石油大学 / NEPU / 
 
 ## 质量优先的提速规则
 
-默认使用 `auto`：普通任务进入 `standard`，答辩自动进入 `rigorous`。两档都保留结构审计和视觉 QA，只跳过不影响质量的重复工作：
+默认使用 `auto`：学术汇报、文献汇报、组会和答辩进入 `rigorous`；课程展示、活动和行政简报可进入 `standard`。提速只能来自按需读取、按需复制和减少无关任务，不能减少论证设计、模板套用、图表裁剪和视觉 QA。
 
 - **按需加载**：只读取当前任务需要的 reference；不要预读全部参考资料、图集或演示文件。
-- **按需资源**：工作区默认仅复制 logo。模板和字体直接从技能目录读取，确定使用后只复制所选文件；不要复制全部约 320 MB 资源。
+- **按需资源**：工作区默认复制 logo + 场景匹配的 1 个模板；不要复制全部约 320 MB 资源。生成最终 PPT 时必须以用户模板或内置匹配模板为视觉基底，不能退回到裸脚本样式。
 - **一次构建，一次必检**：生成后运行 `scripts/validate_pptx.py`，渲染一次全 deck 并检查 contact sheet；对图表、表格、流程图、密集文本页查看全尺寸预览。
 - **发现缺陷才重生成**：必须修复 high 缺陷和可修复的 medium 缺陷并重新验证；若首轮无这些缺陷，不做形式化的二次生成。
 - **自动升级 `rigorous`**：论文/文献汇报、答辩、科研评审、复杂图表/流程图、已有 PPT 修订，或用户明确要求高质量时，执行完整视觉复核和修订循环。
-- **真正按需**：演讲者备注仅在用户要求时生成；网页采集和新科研图仅在任务内容确实依赖或用户要求时执行。打开失败、兼容性敏感或用户要求时才运行 Office/WPS 验证。
+- **真正按需**：网页采集、全量 Office/WPS 兼容验证、gallery/eval 仅在任务需要时执行；不要用省略模板、裁图、重排或视觉复核来省时间。
 - **禁止无关任务**：生成用户 PPT 时不要运行 `run_evals.py`、`generate_gallery.py`，也不要遍历或复制未使用模板。
 
 ## 核心行为准则
@@ -166,7 +166,7 @@ description: Create Northeast Petroleum University (东北石油大学 / NEPU / 
 | | `references/animation.md` | 克制动画/过渡指南 |
 | 内容 | `references/web-content-acquisition.md` / `speaker-notes.md` / `office-compatibility.md` / `nepu-bundled-assets.md` | 网页采集 / 备注 / 兼容性 / 内置资源 |
 | 脚本 | `scripts/create_workspace.py` | 创建工作区 |
-| | `scripts/slide_builder.py` | **高层幻灯片 API**（封面/章节/图表页/矩阵/结论） |
+| | `scripts/slide_builder.py` | 快速脚手架 API；复杂学术/文献汇报必须基于模板做定制布局 |
 | | `scripts/plot_style.py` | Matplotlib NEPU 样式（自动字体检测） |
 | | `scripts/web_collect.py` | 网页图文采集 |
 | | `scripts/validate_pptx.py` | **跨平台 PPTX 结构校验**（无需 Office） |

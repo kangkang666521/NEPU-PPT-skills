@@ -13,7 +13,7 @@
 ## Commands
 
 ```bash
-# 创建工作区
+# 创建工作区（默认复制 logo + 场景匹配模板；academic-report 自动 rigorous）
 python scripts/create_workspace.py ./output-dir --profile academic-report
 
 # 独立 Python 环境安装依赖

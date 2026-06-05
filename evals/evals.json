@@ -30,10 +30,12 @@
       ]
     },
     {
-      "id": "quality-first-standard-speed",
-      "prompt": "Create a standard 6-slide NEPU course presentation from the provided outline. I did not request speaker notes, web research, scientific plotting, or Office compatibility testing.",
-      "expected_output": "Assistant produces an editable PPTX, runs structural validation and one rendered visual QA pass, fixes and rerenders only if defects are found, and skips unrequested expensive work.",
+      "id": "quality-first-fast-with-template",
+      "prompt": "Create a 10-slide NEPU academic report deck from the provided paper notes. Keep quality high, but avoid unnecessary work.",
+      "expected_output": "Assistant uses a matching NEPU/user template as the visual base, keeps academic-report QA rigorous, runs structural validation and one rendered visual QA pass, fixes defects when found, and skips unrelated expensive work.",
       "assertions": [
+        { "name": "matching_template_used", "description": "A user-provided or bundled scene-matched PPTX template is used as the design base, not a bare script layout." },
+        { "name": "academic_report_rigorous", "description": "Academic/paper report delivery keeps rigorous quality behavior by default." },
         { "name": "quality_checks_retained", "description": "Structural validation and rendered visual QA are completed before delivery." },
         { "name": "no_unrequested_work", "description": "No speaker notes, web collection, scientific plotting, Office COM validation, gallery generation, or eval run is performed." },
         { "name": "conditional_rerender", "description": "A second generation/render is performed only when the first QA pass finds a defect requiring correction." }

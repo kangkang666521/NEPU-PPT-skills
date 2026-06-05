@@ -74,14 +74,14 @@ python scripts/validate_pptx.py output/versions/deck.pptx
 python scripts/self_check.py
 ```
 
-工作区默认只复制内置 logo，避免每次任务重复复制约 320 MB 的全部模板和字体。需要全部资源时使用 `--assets all`；`--quality auto` 会让答辩自动进入严格模式，其他高风险交付使用 `--quality rigorous`。无论哪种质量模式，最终 PPTX 都应完成结构审计和至少一轮渲染视觉检查。
+工作区默认复制内置 logo 和一个按场景匹配的模板，避免每次任务重复复制约 320 MB 的全部模板和字体，同时不让最终 PPT 退回到裸脚本样式。需要全部资源时使用 `--assets all`；`--quality auto` 会让学术汇报、文献汇报、组会和答辩进入严格模式。无论哪种质量模式，最终 PPTX 都应完成结构审计和至少一轮渲染视觉检查。
 
 ## 脚本速览
 
 | 脚本 | 用途 |
 |---|---|
 | `create_workspace.py` | 一键创建标准化任务工作区（目录+种子文件+manifest） |
-| `slide_builder.py` | `NepuSlideBuilder` — 封面/章节/claim页/图表页(3布局)/矩阵/要点/结论/图片网格 |
+| `slide_builder.py` | `NepuSlideBuilder` — 快速脚手架；复杂学术/文献汇报不要只用默认布局，应基于模板定制 |
 | `plot_style.py` | NEPU 色板常量、Matplotlib rcParams、自动 CJK 字体检测、PPT 尺寸预设 |
 | `web_collect.py` | 公开网页文本/图片采集，自动编码检测，来源记录 |
 | `validate_pptx.py` | 纯 Python 结构校验：边界/溢出/占位符/布局重复/图片尺寸 |
